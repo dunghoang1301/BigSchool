@@ -3,6 +3,7 @@ using BigSchool.ViewModels;
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -18,6 +19,52 @@ namespace BigSchool.Controllers
         }
         // GET: Courses
         [Authorize]
+        public ActionResult Edit(int id)
+        {
+            var userId = User.Identity.GetUserId();
+            var courses = _dbContext.Courses.Single(c => c.Id == id && c.LecturerId == userId);
+
+            var viewModel = new CoursesViewModel
+            {
+                Categories = _dbContext.Categories.ToList(),
+                Date = course.Datetime.ToString("dd/M/yyyy"),
+                Time = course.Datetime.ToString("HH;mm"),
+                Category = course.CategoryId,
+                Place = course.Place
+            };
+            return View("Create", viewModel);
+        }
+
+        public ActionResult Mine()
+        {
+            var userId = User.Identity.GetUserId();
+            var courses = _dbContext.Courses
+                .Where(c => c.LecturerId == userId && c.DateTime > DateTime.Now)
+                .Include(l => l.Lecturer)
+                .Include(l => l.Category)
+                .ToList();
+
+            return View(courses);
+        }
+        public ActionResult Attending()
+        {
+            var userId = User.Identity.GetUserId();
+
+            var courses = _dbContext.Attendances
+                .Where(a => a.AttendeeId == userId)
+                .Select(a => a.Course)
+                .Include(l => l.Lecturer)
+                .Include(l => l.Category)
+                .ToList();
+
+            var viewModel = new CoursesViewModel
+            {
+                UpcommingCourses = courses,
+                ShowAction = User.Identity.IsAuthenticated
+            };
+
+            return View(viewModel);
+        }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create()

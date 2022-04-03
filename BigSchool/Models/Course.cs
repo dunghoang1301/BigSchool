@@ -8,6 +8,7 @@ namespace BigSchool.Models
 {
     public class Course
     {
+        public static object Datetime { get; internal set; }
         public int Id { get; set; }
 
         public ApplicationUser Lecturer { get; set; }
